@@ -15,6 +15,7 @@ namespace JetVsAliens
         Random random;
         public int ID { get; private set; }
         private int frame = 0;
+        public int PointsWorth { get; private set; }
 
         public event EventHandler<ExplosionEventArgs> Explosion;
 
@@ -34,6 +35,7 @@ namespace JetVsAliens
             this.ID = ID;
             base.millisecondsPerFrame = 300;
             loadSheet();
+            PointsWorth = 10;
         }
 
         private void loadSheet()

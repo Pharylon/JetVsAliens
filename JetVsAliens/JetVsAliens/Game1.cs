@@ -20,12 +20,16 @@ namespace JetVsAliens
         SpriteBatch spriteBatch;
         Jet jet;
         List<AlienShip> aliens = new List<AlienShip>();
-        List<Laser> lasers = new List<Laser>();
+        List<Projectile> enemyProjectiles = new List<Projectile>();
+        List<Projectile> playerProjectiles = new List<Projectile>();
         List<Explosion> explosions = new List<Explosion>();
 
         int alienShipID = 0;
+        Vector2 alienShipSpeed = new Vector2(1, 1);
         int lives = 3;
-        int score;
+        int score = 0;
+
+        Writer scoreWriter;
 
         Random random = new Random();
 
@@ -35,6 +39,7 @@ namespace JetVsAliens
         Texture2D jetTexture;
         Texture2D alienShip1Texture;
         Texture2D numbersTexture;
+        Texture2D bulletTexture;
 
         public Game1()
         {
@@ -69,9 +74,12 @@ namespace JetVsAliens
             largeExplosionTexture = Content.Load<Texture2D>(@"Images\largeExplosion");
             alienShip1Texture = Content.Load<Texture2D>(@"Images\alien1");
             numbersTexture = Content.Load<Texture2D>(@"Images\numbers");
+            bulletTexture = Content.Load<Texture2D>(@"Images\bullet");
+
 
             CreateShipString(5, new Vector2(200, 100));
             loadJet();
+            scoreWriter = new Writer(numbersTexture, Vector2.Zero);
 
         }
 
@@ -80,16 +88,16 @@ namespace JetVsAliens
             jet = new Jet(jetTexture, new Vector2(Window.ClientBounds.Width / 2, Window.ClientBounds.Height), new Vector2(5, 5));
         }
 
-        private void CreateShipString(int p, Vector2 v)
+        private void CreateShipString(int p, Vector2 position)
         {
             for (int i = 0; i <= p; i++)
             {
-                AlienShip alien = new AlienShip(alienShip1Texture, v, new Vector2(1, 1), new Vector2(1, 1), random, alienShipID);
+                AlienShip alien = new AlienShip(alienShip1Texture, position, alienShipSpeed, new Vector2(1, 1), random, alienShipID);
                 aliens.Add(alien);
                 alien.Explosion += alien_explosion;
                 alienShipID++;
-                v.X += 20;
-                v.Y += 20;
+                position.X += 20;
+                position.Y += 20;
             }  
         }
 
@@ -113,28 +121,38 @@ namespace JetVsAliens
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
                 this.Exit();
 
-            if (jet != null)
-            {
-                jet.Update(gameTime, Window.ClientBounds);
-            }
+            if (jet.Update(gameTime, Window.ClientBounds))
+                playerProjectiles.Add(new Projectile(bulletTexture, new Point(1, 4), jet.Postion, true));
 
             for (int i = aliens.Count - 1; i >= 0; i--)
             {
                 aliens[i].Update(gameTime, Window.ClientBounds);
                 if (aliens[i].CheckIfFiredShot())
-                    lasers.Add(new Laser(laserBulletTexture, aliens[i].GunLocation));
+                    enemyProjectiles.Add(new Projectile(laserBulletTexture, new Point(6, 14), aliens[i].GunLocation, false));
                 if (aliens[i].detectCollision(jet.collisionRectangle))
-                    aliens[i].OnExplosion(new ExplosionEventArgs(aliens[i].Postion, false));
+                    aliens[i].OnExplosion(new ExplosionEventArgs(aliens[i].Postion,  aliens[i].PointsWorth, false));
             }
 
-            for (int i = lasers.Count - 1; i >= 0; i--)
+            for (int i = enemyProjectiles.Count - 1; i >= 0; i--)
             {
-                lasers[i].Update(gameTime, Window.ClientBounds);
-                //if (lasers[i].detectCollision(jet.collisionRectangle))
-                if (jet.detectCollision(lasers[i].collisionRectangle))
+                enemyProjectiles[i].Update(gameTime, Window.ClientBounds);
+                if (jet.detectCollision(enemyProjectiles[i].collisionRectangle))
                     jetExplosion();
-                if (lasers[i].Postion.Y > Window.ClientBounds.Height)
-                    lasers.Remove(lasers[i]);
+                if (enemyProjectiles[i].Postion.Y > Window.ClientBounds.Height || enemyProjectiles[i].Postion.Y < 0)
+                    enemyProjectiles.Remove(enemyProjectiles[i]);
+            }
+
+            for (int i = playerProjectiles.Count - 1; i >= 0; i--)
+            {
+                for (int n = aliens.Count - 1; n >= 0; n--)
+                {
+                    if (aliens[n].detectCollision(playerProjectiles[i].collisionRectangle))
+                        aliens[n].OnExplosion(new ExplosionEventArgs(aliens[n].Postion, aliens[n].PointsWorth, false));
+                }
+
+                playerProjectiles[i].Update(gameTime, Window.ClientBounds);
+                if (playerProjectiles[i].Postion.Y > Window.ClientBounds.Height || playerProjectiles[i].Postion.Y < 0)
+                    playerProjectiles.Remove(playerProjectiles[i]);
             }
 
             for (int i = explosions.Count - 1; i >= 0; i--)
@@ -157,14 +175,20 @@ namespace JetVsAliens
 
             spriteBatch.Begin(SpriteSortMode.FrontToBack, BlendState.AlphaBlend);
             jet.Draw(gameTime, spriteBatch);
+
             foreach (AlienShip alien in aliens)
                 alien.Draw(gameTime, spriteBatch);
             
-            foreach (Laser laser in lasers)
+            foreach (Projectile laser in enemyProjectiles)
                 laser.Draw(gameTime, spriteBatch);
+
+            foreach (Projectile bullet in playerProjectiles)
+                bullet.Draw(gameTime, spriteBatch);
 
             foreach (Explosion explosion in explosions)
                 explosion.Draw(gameTime, spriteBatch);
+
+            scoreWriter.Draw(gameTime, spriteBatch, score);
 
             spriteBatch.End();            
 
@@ -177,6 +201,7 @@ namespace JetVsAliens
             {
                 aliens.Remove(sender as AlienShip);
                 explosions.Add(new Explosion(smallExplosionTexture, e.Position, e.BigExplosion));
+                score += e.Points;
             }
         }
 

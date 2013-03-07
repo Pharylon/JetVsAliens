@@ -9,16 +9,18 @@ namespace JetVsAliens
 {
     
 
-    class Laser : Sprite
+    class Projectile : Sprite
     {
+        protected bool travelUp;
 
-        public Laser(Texture2D textureImage, Vector2 position)
+        public Projectile(Texture2D textureImage, Point frameSize, Vector2 position, bool travelUp)
             : base(textureImage, position, new Vector2(0, 3))
         {
-            frameSize = new Point(6, 14);
             collisionOffset = 1;
             currentFrame = new Point(0, 0);
             sheetSize = new Point(0, 0);
+            this.travelUp = travelUp;
+            this.frameSize = frameSize;
         }
 
         private Vector2 direction = new Vector2(0, 1);
@@ -30,7 +32,11 @@ namespace JetVsAliens
 
         public override bool Update(GameTime gameTime, Rectangle clientBounds)
         {
-            position += (Direction * speed);
+            if (travelUp)
+                position -= (Direction * speed);
+            else
+                position += (Direction * speed);
+
             return base.Update(gameTime, clientBounds);
         }
     }

@@ -13,6 +13,7 @@ namespace JetVsAliens
         public bool Invincible { get; private set; }
         private bool flyingOntoScreen;
         private int age;
+        public bool tryingToFire = false;
 
         public Jet(Texture2D textureImage, Vector2 position, Vector2 speed)
             : base(textureImage, position, speed)
@@ -21,7 +22,7 @@ namespace JetVsAliens
             Invincible = true;
             flyingOntoScreen = true;
             currentFrame.Y = 1;
-            base.millisecondsPerFrame = 200;
+            base.millisecondsPerFrame = 100;
         }
 
         private void loadSheet()
@@ -39,6 +40,7 @@ namespace JetVsAliens
             get
             {
                 Vector2 inputDirection = Vector2.Zero;
+                tryingToFire = false;
 
                 if (Keyboard.GetState().IsKeyDown(Keys.Left))
                     inputDirection.X -= 1;
@@ -48,12 +50,16 @@ namespace JetVsAliens
                     inputDirection.Y -= 1;
                 if (Keyboard.GetState().IsKeyDown(Keys.Down))
                     inputDirection.Y += 1;
+                if (Keyboard.GetState().IsKeyDown(Keys.Space))
+                    tryingToFire = true;
 
                 GamePadState gamepadState = GamePad.GetState(PlayerIndex.One);
                 if (gamepadState.ThumbSticks.Left.X != 0)
                     inputDirection.X += gamepadState.ThumbSticks.Left.X;
                 if (gamepadState.ThumbSticks.Left.Y != 0)
                     inputDirection.Y -= gamepadState.ThumbSticks.Left.Y;
+                if (gamepadState.Triggers.Right > 0)
+                    tryingToFire = true;
 
                 if ((inputDirection.X != 0 || inputDirection.Y != 0) && !flyingOntoScreen)
                     EndInvincibility();
@@ -62,31 +68,37 @@ namespace JetVsAliens
             }
         }
 
+
         public override bool Update(GameTime gameTime, Rectangle clientBounds)
         {
-            if (flyingOntoScreen)
+            if (base.Update(gameTime, clientBounds))
             {
-                position.Y -= 1;
-                if (position.Y <= clientBounds.Height - frameSize.Y)
-                    flyingOntoScreen = false;
+                if (flyingOntoScreen)
+                {
+                    position.Y -= 3;
+                    if (position.Y <= clientBounds.Height - frameSize.Y)
+                        flyingOntoScreen = false;
+                }
+                else
+                {
+                    if ((position.X + Direction.X) <= (clientBounds.Width - frameSize.X) && (position.X + Direction.X) >= 0)
+                        position.X += Direction.X;
+
+                    if ((position.Y + Direction.Y) <= (clientBounds.Height - frameSize.Y) && (position.Y + Direction.Y) >= 0)
+                        position.Y += Direction.Y;
+
+                    if (tryingToFire)
+                        return true;
+                }
+
+                age++;
+                if (age > 1000)
+                    EndInvincibility();
+
+                if (tryingToFire)
+                    return true;
             }
-            else
-            {
-                if ((position.X + Direction.X) <= (clientBounds.Width - frameSize.X) && (position.X + Direction.X) >= 0)
-                    position.X += Direction.X;
-
-                if ((position.Y + Direction.Y) <= (clientBounds.Height - frameSize.Y) && (position.Y + Direction.Y) >= 0)
-                    position.Y += Direction.Y;
-            }
-
-            age++;
-
-            if (age > 1000)
-            {
-                EndInvincibility();
-            }
-
-            return base.Update(gameTime, clientBounds);
+                return false;
         }
 
         private void EndInvincibility()
