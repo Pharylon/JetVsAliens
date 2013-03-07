@@ -22,6 +22,9 @@ namespace JetVsAliens
             base.sheetSize = new Point(5, 0);
         }
 
+        //Turns a number into a string of characters, then turns each one back into ints
+        //And then draws the right number. Seems like a terrible way to do it, but I
+        //don't know a better one that accepts an arbitrary number.
         public void Draw(GameTime gameTime, SpriteBatch spriteBatch, int writeInt)
         {
             char[] intToCharArray = writeInt.ToString().ToCharArray();
@@ -31,20 +34,16 @@ namespace JetVsAliens
                 base.Draw(gameTime, spriteBatch);
                 position.X += 20;
             }
+            position = startingPostion; //Resets the draw position for the next frame.
 
-            position = startingPostion;
-            //currentFrame.X = writeInt;
+            // Old logic for single digit below. Not sure why I'm not deleting it yet. :)
+            //currentFrame.X = writeInt;              
             //base.Draw(gameTime, spriteBatch);
         }
 
         public void Draw(GameTime gameTime, SpriteBatch spriteBatch, string writeString)
         {
             //To do: Create version that takes text.
-        }
-
-        public override bool Update(GameTime gameTime, Rectangle clientBounds)
-        {
-            return base.Update(gameTime, clientBounds);
         }
     }
 }

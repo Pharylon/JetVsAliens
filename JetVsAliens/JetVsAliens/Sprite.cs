@@ -36,7 +36,9 @@ namespace JetVsAliens
             this.millisecondsPerFrame = millisecondsPerFrame;
         }
 
-        //GameTime returns true if it ran, fasle otherwise;
+        //Update returns true if it ran, false otherwise.
+        //CurrentFrame logic advances along "frames" of a single sheet (determined by frameSize)
+        //Cell to be drawn is moved "down" the sheet with each update. 
         public virtual bool Update(GameTime gameTime, Rectangle clientBounds)
         {
             timeSinceLastFrame += gameTime.ElapsedGameTime.Milliseconds;
@@ -47,9 +49,13 @@ namespace JetVsAliens
                 if (currentFrame.X >= sheetSize.X)
                 {
                     currentFrame.X = 0;
-                    //++currentFrame.Y;
-                    //if (currentFrame.Y >= sheetSize.Y)
-                    //    currentFrame.Y = 0;
+                    //I have removed logic for advancing to new rows. All animation stays on single row by default.
+                    //I may add this back later, not sure. At this point I'm using different rows for alternate animations   
+                    //such as the "flashing" animation of the jet when invisible. This may prove to be too much for
+                    //large animation sequences, though.
+                    //++currentFrame.Y;                       
+                    //if (currentFrame.Y >= sheetSize.Y)       
+                    //    currentFrame.Y = 0;                  
                 }
                 return true;
             }
@@ -57,16 +63,14 @@ namespace JetVsAliens
                 return false;
         }
 
+        //Passed by the Game class's Draw method, it draws the correct frame as defined by the earlier Update method.
         public virtual void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
-            spriteBatch.Draw(textureImage, position, getCurrentRectangle(), Color.White, 0, Vector2.Zero, 1f, SpriteEffects.None, 0);
+            Rectangle currentRectangle = new Rectangle(currentFrame.X * frameSize.X, currentFrame.Y * frameSize.Y, frameSize.X, frameSize.Y);
+            spriteBatch.Draw(textureImage, position, currentRectangle, Color.White, 0, Vector2.Zero, 1f, SpriteEffects.None, 0);
         }
 
-        protected Rectangle getCurrentRectangle()
-        {
-            return new Rectangle(currentFrame.X * frameSize.X, currentFrame.Y * frameSize.Y, frameSize.X, frameSize.Y);
-        }
-
+        //Rectangle used for collision detection.
         public Rectangle collisionRectangle
         {
             get
@@ -76,6 +80,7 @@ namespace JetVsAliens
             }
         }
 
+        //Pretty simple, checks if the rectangles intersect, returns true if there is a collision.
         public virtual bool detectCollision(Rectangle otherRectangle)
         {
             return otherRectangle.Intersects(this.collisionRectangle);

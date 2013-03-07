@@ -11,9 +11,14 @@ namespace JetVsAliens
     class Jet : Sprite
     {
         public bool Invincible { get; private set; }
-        private bool flyingOntoScreen;
-        private int age;
-        public bool tryingToFire = false;
+        bool flyingOntoScreen;
+        int age;
+        bool tryingToFire = false;
+        int timeSinceLastShot = 0;
+        const int timeBetweenShots = 5;
+        bool firingLeftSide = true;
+        
+
 
         public Jet(Texture2D textureImage, Vector2 position, Vector2 speed)
             : base(textureImage, position, speed)
@@ -25,12 +30,24 @@ namespace JetVsAliens
             base.millisecondsPerFrame = 100;
         }
 
+        //This alternates shots on the left and right side
+        public Vector2 GunLocation
+        {
+            get
+            {
+                if (firingLeftSide)
+                    return new Vector2(position.X + collisionRectangle.Width / 2 + 20, position.Y + collisionRectangle.Height / 3);
+                else
+                    return new Vector2(position.X + collisionRectangle.Width / 2 - 20, position.Y + collisionRectangle.Height / 3);
+            }
+        }
+
         private void loadSheet()
         {
-            base.frameSize = new Point(45, 72);
-            base.collisionOffset = 1;
-            base.currentFrame = new Point(0, 0);
-            base.sheetSize = new Point(3, 0);
+            base.frameSize = new Point(45, 72); //Each frame of jet animation is 45 x 72 pixels.
+            base.collisionOffset = 1; //Collison sone is not offset.
+            base.currentFrame = new Point(0, 0); //Always start at 0, 0 for currentFrame. This is updated in the base Sprite.Update method
+            base.sheetSize = new Point(3, 0); // Total number of frames, left to right. Row 0 is main animation, alternate animation (ie, flashign for invincibility) on other rows.
         }
 
         
@@ -42,6 +59,7 @@ namespace JetVsAliens
                 Vector2 inputDirection = Vector2.Zero;
                 tryingToFire = false;
 
+                //Get Keybaord Input
                 if (Keyboard.GetState().IsKeyDown(Keys.Left))
                     inputDirection.X -= 1;
                 if (Keyboard.GetState().IsKeyDown(Keys.Right))
@@ -53,6 +71,7 @@ namespace JetVsAliens
                 if (Keyboard.GetState().IsKeyDown(Keys.Space))
                     tryingToFire = true;
 
+                //For Xbox Controllers
                 GamePadState gamepadState = GamePad.GetState(PlayerIndex.One);
                 if (gamepadState.ThumbSticks.Left.X != 0)
                     inputDirection.X += gamepadState.ThumbSticks.Left.X;
@@ -61,7 +80,8 @@ namespace JetVsAliens
                 if (gamepadState.Triggers.Right > 0)
                     tryingToFire = true;
 
-                if ((inputDirection.X != 0 || inputDirection.Y != 0) && !flyingOntoScreen)
+                //Breaks "Invincibility" period when the player attempts to move or fire after coming on screen.
+                if ((inputDirection.X != 0 || inputDirection.Y != 0 || tryingToFire) && !flyingOntoScreen)
                     EndInvincibility();
 
                 return inputDirection * speed;
@@ -73,6 +93,8 @@ namespace JetVsAliens
         {
             if (base.Update(gameTime, clientBounds))
             {
+                //If (flyingOntScreen) Jet flys onto screen when new jet is generated, not in player control, otherwise takes 
+                //keyboard/controller state gathered earlier and updates state.
                 if (flyingOntoScreen)
                 {
                     position.Y -= 3;
@@ -87,28 +109,34 @@ namespace JetVsAliens
                     if ((position.Y + Direction.Y) <= (clientBounds.Height - frameSize.Y) && (position.Y + Direction.Y) >= 0)
                         position.Y += Direction.Y;
 
-                    if (tryingToFire)
-                        return true;
+                    if (tryingToFire && timeSinceLastShot > timeBetweenShots)
+                    {
+                        timeSinceLastShot = 0; //reset time since last shot
+                        firingLeftSide = !firingLeftSide; //toggle which side of plane bullets are coming out of.
+                        return true; //returns true if shot fired.
+                    }
+                    else
+                        timeSinceLastShot++; //if it's too soon for another shot, advance the counter.
                 }
 
                 age++;
                 if (age > 1000)
-                    EndInvincibility();
-
-                if (tryingToFire)
-                    return true;
+                    EndInvincibility(); //You don't get to keep the starting invincibliity forever, even if you don't move or fire.
             }
-                return false;
+                return false; //returns false if did not fire.
         }
 
-        private void EndInvincibility()
+        private void EndInvincibility() //Ends invincibility period.
         {
             Invincible = false;
             millisecondsPerFrame = 16;
             currentFrame.Y = 0;
         }
 
-        public override bool detectCollision(Rectangle otherRectangle)
+        //TODO: Make collision area more precise. Put smaller rectangles inside main CollisionRectangle (wing, fuselage, other wing). If 
+        //collsions is detected on main rectangle, check smaller ones. Return false if these aren't tripped. This will give a tighter 
+        //collision zone.
+        public override bool detectCollision(Rectangle otherRectangle) 
         {
             if (Invincible)
                 return false;

@@ -1,4 +1,4 @@
-#Ace Jet Fighter vs Alien Invaders!
+#Ace Fighter Pilot vs the Alien Invaders!
 
 ##Overview
 It will eventually be a tongue-in-cheek Galaga-ish shooter. Right now it's not much.

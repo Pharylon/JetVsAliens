@@ -32,6 +32,7 @@ namespace JetVsAliens
             }
         }
 
+        //Animate explosion frames.
         public override bool Update(GameTime gameTime, Rectangle clientBounds)
         {
             if (base.Update(gameTime, clientBounds))

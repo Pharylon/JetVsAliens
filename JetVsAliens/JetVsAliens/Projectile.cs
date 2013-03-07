@@ -13,6 +13,16 @@ namespace JetVsAliens
     {
         protected bool travelUp;
 
+        public Projectile(Texture2D textureImage, Point frameSize, Vector2 position, bool travelUp, Vector2 speed)
+            : base(textureImage, position, speed)
+        {
+            collisionOffset = 1;
+            currentFrame = new Point(0, 0);
+            sheetSize = new Point(0, 0);
+            this.travelUp = travelUp;
+            this.frameSize = frameSize;
+        }
+
         public Projectile(Texture2D textureImage, Point frameSize, Vector2 position, bool travelUp)
             : base(textureImage, position, new Vector2(0, 3))
         {

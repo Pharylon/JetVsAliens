@@ -19,6 +19,7 @@ namespace JetVsAliens
 
         public event EventHandler<ExplosionEventArgs> Explosion;
 
+        //Where the shots come from.
         public Vector2 GunLocation
         {
             get
@@ -48,6 +49,9 @@ namespace JetVsAliens
 
         public override bool Update(GameTime gameTime, Rectangle clientBounds)
         {
+            //TODO: Some better AI, at least so it loops around in circles and
+            //shit instead of bouncing off the corner of the screen.
+            //Eventually, maybe even more in-depth than that.
             if ((position.X + Direction.X) >= (clientBounds.Width - frameSize.X) || (position.X + Direction.X) <= 0)
                 direction.X *= -1;
 
@@ -65,11 +69,11 @@ namespace JetVsAliens
                 frame = 0;
             switch (frame)
             {
-                case 0: currentFrame.X = 0; break;
-                case 1: currentFrame.X = 1; break;
-                case 2: currentFrame.X = 2; break;
-                case 3: currentFrame.X = 3; break;
-                case 4: currentFrame.X = 2; break;
+                case 0: currentFrame.X = 0; break;  //This is all so
+                case 1: currentFrame.X = 1; break;  //So the animation
+                case 2: currentFrame.X = 2; break;  //works up the
+                case 3: currentFrame.X = 3; break;  //sheet and then
+                case 4: currentFrame.X = 2; break;  //comes back down.
                 case 5: currentFrame.X = 1; break;
                 default: currentFrame.X = 0; break;
             }
@@ -79,6 +83,7 @@ namespace JetVsAliens
                 return false;
         }
 
+        //Roll the dice to see if it fired a shot.
         public bool CheckIfFiredShot()
         {
             if (random.Next(100) == 0)
@@ -88,7 +93,8 @@ namespace JetVsAliens
         }
 
 
-        //Not being used yet. Will use this once I add more logic.
+        //Not being used yet. Will use this once I add more logic. Allows the
+        //ship to move toward the specified location.
         private bool MoveTowardsPosition(Vector2 destination)
         {
             if (Math.Abs(destination.X - position.X) <= speed.X && Math.Abs(destination.Y - position.Y) <= speed.Y)
@@ -113,6 +119,7 @@ namespace JetVsAliens
             return false;
         }
 
+        //Raises explosion event. Duh.
         public void OnExplosion(ExplosionEventArgs e)
         {
             EventHandler<ExplosionEventArgs> explosion = Explosion;

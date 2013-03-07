@@ -14,7 +14,7 @@ namespace JetVsAliens
     /// <summary>
     /// This is the main type for your game
     /// </summary>
-    public class Game1 : Microsoft.Xna.Framework.Game
+    public class Game : Microsoft.Xna.Framework.Game
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
@@ -41,7 +41,7 @@ namespace JetVsAliens
         Texture2D numbersTexture;
         Texture2D bulletTexture;
 
-        public Game1()
+        public Game()
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
@@ -76,7 +76,7 @@ namespace JetVsAliens
             numbersTexture = Content.Load<Texture2D>(@"Images\numbers");
             bulletTexture = Content.Load<Texture2D>(@"Images\bullet");
 
-
+            //Load initial enemy ships, player jet and class for writing score
             CreateShipString(5, new Vector2(200, 100));
             loadJet();
             scoreWriter = new Writer(numbersTexture, Vector2.Zero);
@@ -88,9 +88,10 @@ namespace JetVsAliens
             jet = new Jet(jetTexture, new Vector2(Window.ClientBounds.Width / 2, Window.ClientBounds.Height), new Vector2(5, 5));
         }
 
-        private void CreateShipString(int p, Vector2 position)
+        //To do: completely revamp this method to allow for calling all kinds of different ships in different circumstances. Only have the base five now.
+        private void CreateShipString(int numberToCreate, Vector2 position)
         {
-            for (int i = 0; i <= p; i++)
+            for (int i = 0; i <= numberToCreate; i++)
             {
                 AlienShip alien = new AlienShip(alienShip1Texture, position, alienShipSpeed, new Vector2(1, 1), random, alienShipID);
                 aliens.Add(alien);
@@ -121,9 +122,12 @@ namespace JetVsAliens
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
                 this.Exit();
 
+            //Runs jet.Update and if returns true, fires a bullet. Will eventaully need to modify this so it can
+            //fire missles and other types of projectiles.
             if (jet.Update(gameTime, Window.ClientBounds))
-                playerProjectiles.Add(new Projectile(bulletTexture, new Point(1, 4), jet.Postion, true));
+                playerProjectiles.Add(new Projectile(bulletTexture, new Point(1, 4), jet.GunLocation, true, new Vector2(0, 20)));
 
+            //Loops through all AlienShip.Updates, checks if they have been destroyed and fires shots if AlienShip.Update returns true.
             for (int i = aliens.Count - 1; i >= 0; i--)
             {
                 aliens[i].Update(gameTime, Window.ClientBounds);
@@ -136,6 +140,7 @@ namespace JetVsAliens
                 }
             }
 
+            //Loops through enemy projectiles to see if they hit hte jet. Removes them if they go off screen.
             for (int i = enemyProjectiles.Count - 1; i >= 0; i--)
             {
                 enemyProjectiles[i].Update(gameTime, Window.ClientBounds);
@@ -145,19 +150,24 @@ namespace JetVsAliens
                     enemyProjectiles.Remove(enemyProjectiles[i]);
             }
 
+            //Loops through player projectiles to see if they hit an enemy. Removes them if they go off screen.
             for (int i = playerProjectiles.Count - 1; i >= 0; i--)
             {
                 for (int n = aliens.Count - 1; n >= 0; n--)
                 {
                     if (aliens[n].detectCollision(playerProjectiles[i].collisionRectangle))
+                    {
                         aliens[n].OnExplosion(new ExplosionEventArgs(aliens[n].Postion, aliens[n].PointsWorth, false));
+                        playerProjectiles.Remove(playerProjectiles[i]);
+                        continue; //Bullet has been destroyed, so can't check it against any other alien ships. Continue breaks us out of the loop.
+                    }
                 }
-
                 playerProjectiles[i].Update(gameTime, Window.ClientBounds);
                 if (playerProjectiles[i].Postion.Y > Window.ClientBounds.Height || playerProjectiles[i].Postion.Y < 0)
                     playerProjectiles.Remove(playerProjectiles[i]);
             }
 
+            //Updates all explosions.
             for (int i = explosions.Count - 1; i >= 0; i--)
             {
                 explosions[i].Update(gameTime, Window.ClientBounds);
@@ -174,9 +184,12 @@ namespace JetVsAliens
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
+            //Clear the window, draw background. Star the spriteBatch and pass it to each object so it can draw itself.
+
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
-            spriteBatch.Begin(SpriteSortMode.FrontToBack, BlendState.AlphaBlend);
+            spriteBatch.Begin(SpriteSortMode.FrontToBack, BlendState.AlphaBlend); 
+
             jet.Draw(gameTime, spriteBatch);
 
             foreach (AlienShip alien in aliens)
@@ -198,6 +211,7 @@ namespace JetVsAliens
             base.Draw(gameTime);
         }
 
+        //When an alien explodes, it must be removed and an explosion generated
         private void alien_explosion(object sender, ExplosionEventArgs e)
         {
             if (sender is AlienShip)
@@ -208,6 +222,8 @@ namespace JetVsAliens
             }
         }
 
+        //Destroys current jet, brings on new one. 
+        //TODO: Make it pay attention to lives.
         private void jetExplosion()
         {
             explosions.Add(new Explosion(largeExplosionTexture, jet.Postion, true));
