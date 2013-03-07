@@ -130,7 +130,10 @@ namespace JetVsAliens
                 if (aliens[i].CheckIfFiredShot())
                     enemyProjectiles.Add(new Projectile(laserBulletTexture, new Point(6, 14), aliens[i].GunLocation, false));
                 if (aliens[i].detectCollision(jet.collisionRectangle))
-                    aliens[i].OnExplosion(new ExplosionEventArgs(aliens[i].Postion,  aliens[i].PointsWorth, false));
+                {
+                    aliens[i].OnExplosion(new ExplosionEventArgs(aliens[i].Postion, aliens[i].PointsWorth, false));
+                    jetExplosion();
+                }
             }
 
             for (int i = enemyProjectiles.Count - 1; i >= 0; i--)
