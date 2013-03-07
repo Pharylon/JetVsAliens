@@ -153,17 +153,22 @@ namespace JetVsAliens
             //Loops through player projectiles to see if they hit an enemy. Removes them if they go off screen.
             for (int i = playerProjectiles.Count - 1; i >= 0; i--)
             {
+                bool removeProjectile = false;
                 for (int n = aliens.Count - 1; n >= 0; n--)
                 {
                     if (aliens[n].detectCollision(playerProjectiles[i].collisionRectangle))
                     {
-                        aliens[n].OnExplosion(new ExplosionEventArgs(aliens[n].Postion, aliens[n].PointsWorth, false));
-                        playerProjectiles.Remove(playerProjectiles[i]);
-                        continue; //Bullet has been destroyed, so can't check it against any other alien ships. Continue breaks us out of the loop.
+                        if (!removeProjectile) //Prevents a single bullet from destroying two ships
+                        {
+                            aliens[n].OnExplosion(new ExplosionEventArgs(aliens[n].Postion, aliens[n].PointsWorth, false));
+                            removeProjectile = true;
+                        }
                     }
                 }
                 playerProjectiles[i].Update(gameTime, Window.ClientBounds);
-                if (playerProjectiles[i].Postion.Y > Window.ClientBounds.Height || playerProjectiles[i].Postion.Y < 0)
+
+                //Remove Projectile if it was marked to be removed earlier, or it has traveled off the screen.
+                if (removeProjectile || playerProjectiles[i].Postion.Y > Window.ClientBounds.Height || playerProjectiles[i].Postion.Y < 0)
                     playerProjectiles.Remove(playerProjectiles[i]);
             }
 
