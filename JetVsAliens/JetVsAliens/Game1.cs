@@ -34,7 +34,7 @@ namespace JetVsAliens
         Texture2D largeExplosionTexture;
         Texture2D jetTexture;
         Texture2D alienShip1Texture;
-        Texture2D numbers;
+        Texture2D numbersTexture;
 
         public Game1()
         {
@@ -68,7 +68,7 @@ namespace JetVsAliens
             smallExplosionTexture = Content.Load<Texture2D>(@"Images\smallExplosion");
             largeExplosionTexture = Content.Load<Texture2D>(@"Images\largeExplosion");
             alienShip1Texture = Content.Load<Texture2D>(@"Images\alien1");
-            numbers = Content.Load<Texture2D>(@"Images\numbers");
+            numbersTexture = Content.Load<Texture2D>(@"Images\numbers");
 
             CreateShipString(5, new Vector2(200, 100));
             loadJet();
