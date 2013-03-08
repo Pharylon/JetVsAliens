@@ -24,14 +24,13 @@ namespace JetVsAliens
         List<Projectile> playerProjectiles = new List<Projectile>();
         List<Explosion> explosions = new List<Explosion>();
 
-        int alienShipID = 0;
         Vector2 alienShipSpeed = new Vector2(1, 1);
         int lives = 3;
         int score = 0;
 
         Writer scoreWriter;
 
-        Random random = new Random();
+        Random random = new Random((int)DateTime.Now.Ticks);
 
         Texture2D laserBulletTexture;
         Texture2D smallExplosionTexture;
@@ -76,8 +75,8 @@ namespace JetVsAliens
             numbersTexture = Content.Load<Texture2D>(@"Images\numbers");
             bulletTexture = Content.Load<Texture2D>(@"Images\bullet");
 
-            //Load initial enemy ships, player jet and class for writing score
-            CreateShipString(5, new Vector2(200, 100));
+            //Load initial enemy ships, player jet and class for writing score6
+            //CreateShipString(new Vector2(200, 100));
             loadJet();
             scoreWriter = new Writer(numbersTexture, Vector2.Zero);
 
@@ -89,17 +88,13 @@ namespace JetVsAliens
         }
 
         //To do: completely revamp this method to allow for calling all kinds of different ships in different circumstances. Only have the base five now.
-        private void CreateShipString(int numberToCreate, Vector2 position)
+        private void CreateShipString(Vector2 position)
         {
-            for (int i = 0; i <= numberToCreate; i++)
-            {
-                AlienShip alien = new AlienShip(alienShip1Texture, position, alienShipSpeed, new Vector2(1, 1), random, alienShipID);
-                aliens.Add(alien);
-                alien.Explosion += alien_explosion;
-                alienShipID++;
-                position.X += 20;
-                position.Y += 20;
-            }  
+            AlienShip alien = new AlienShip(alienShip1Texture, position, alienShipSpeed, new Vector2(1, 1), random, aliens);
+            aliens.Add(alien);
+            alien.Explosion += alien_explosion;
+            position.X += 20;
+            position.Y += 20; 
         }
 
         /// <summary>
@@ -121,6 +116,8 @@ namespace JetVsAliens
             // Allows the game to exit
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
                 this.Exit();
+
+
 
             //Runs jet.Update and if returns true, fires a bullet. Will eventaully need to modify this so it can
             //fire missles and other types of projectiles.

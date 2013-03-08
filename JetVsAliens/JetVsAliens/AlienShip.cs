@@ -16,6 +16,7 @@ namespace JetVsAliens
         public int ID { get; private set; }
         private int frame = 0;
         public int PointsWorth { get; private set; }
+        List<AlienShip> formation;
 
         public event EventHandler<ExplosionEventArgs> Explosion;
 
@@ -28,15 +29,15 @@ namespace JetVsAliens
             }
         }
 
-        public AlienShip(Texture2D textureImage, Vector2 position, Vector2 speed, Vector2 direction, Random random, int ID)
+        public AlienShip(Texture2D textureImage, Vector2 position, Vector2 speed, Vector2 direction, Random random, List<AlienShip> formation)
             : base(textureImage, position, speed)
         {
             this.direction = direction;
             this.random = random;
-            this.ID = ID;
             base.millisecondsPerFrame = 300;
             loadSheet();
             PointsWorth = 10;
+            this.formation = formation;
         }
 
         private void loadSheet()
@@ -52,13 +53,23 @@ namespace JetVsAliens
             //TODO: Some better AI, at least so it loops around in circles and
             //shit instead of bouncing off the corner of the screen.
             //Eventually, maybe even more in-depth than that.
+
+            //float acceleration = random.Next(100);
+            //acceleration = acceleration / 100;
+
+            position += (Direction * speed);
+
+            float turn = .01f;
+
             if ((position.X + Direction.X) >= (clientBounds.Width - frameSize.X) || (position.X + Direction.X) <= 0)
                 direction.X *= -1;
+            else
+                direction.X += turn;
 
             if ((position.Y + Direction.Y) >= (clientBounds.Height / 2) || (position.Y + Direction.Y) <= 0)
                 direction.Y *= -1;
-
-            position += (Direction * speed);
+            else
+                direction.Y += turn;
 
             timeSinceLastFrame += gameTime.ElapsedGameTime.Milliseconds;
             if (timeSinceLastFrame > millisecondsPerFrame)
@@ -69,11 +80,11 @@ namespace JetVsAliens
                 frame = 0;
             switch (frame)
             {
-                case 0: currentFrame.X = 0; break;  //This is all so
-                case 1: currentFrame.X = 1; break;  //So the animation
-                case 2: currentFrame.X = 2; break;  //works up the
-                case 3: currentFrame.X = 3; break;  //sheet and then
-                case 4: currentFrame.X = 2; break;  //comes back down.
+                case 0: currentFrame.X = 0; break;  //This code advances the frames and once
+                case 1: currentFrame.X = 1; break;  //it hits the end, reverses back down
+                case 2: currentFrame.X = 2; break;  //the sheet.
+                case 3: currentFrame.X = 3; break; 
+                case 4: currentFrame.X = 2; break;  
                 case 5: currentFrame.X = 1; break;
                 default: currentFrame.X = 0; break;
             }
